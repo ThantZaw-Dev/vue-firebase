@@ -1,0 +1,61 @@
+<div id="app">
+    <h2>{{ title }}</h2>
+
+    <input id="newNotes" />&nbsp;
+    <button @click="addNewNotes()">Add</button>
+    <p v-for="note in notes">
+        <b>{{ note.description }}</b> &nbsp;
+        <button @click="deleteNotes(note.id)">Delete Notes</button>
+    </p>
+</div>
+
+<script src="firebaseConfig.js"></script>
+<script type="module">
+  import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js'
+  import { getFirestore, getDocs, collection, addDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js'
+
+  const app = initializeApp(firebaseConfig)
+
+  var db = getFirestore(app);
+
+  createApp({
+    data() {
+      
+      return {
+        title:"Todo App",
+        notes: []
+      }
+    },
+    methods:{
+        async refreshData(){
+            this.notes = [];
+            var querySnaphot = await getDocs(collection(db,"notes"));
+            querySnaphot.forEach((doc)=>{
+                this.notes.push({description:doc.data().descriptions,id:doc.id});
+
+            });
+
+            console.log(this.notes)
+        },
+
+        async addNewNotes(){
+            var newNotes = document.getElementById("newNotes").value;
+            await addDoc(collection(db,"notes"),{descriptions:newNotes});
+            this.refreshData();
+        },
+
+        async deleteNotes(id){
+            await deleteDoc(doc(db,"notes",id));
+            this.refreshData();
+
+        }
+
+    },
+
+    mounted:function(){
+        this.refreshData();
+    }
+
+  }).mount('#app')
+</script>
